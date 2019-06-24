@@ -1,12 +1,11 @@
 <?php
 /**
  * Plugin Name:     Gruene Onboard
- * Plugin URI:      PLUGIN SITE HERE
- * Description:     PLUGIN DESCRIPTION HERE
- * Author:          YOUR NAME HERE
- * Author URI:      YOUR SITE HERE
+ * Plugin URI:      https://github.com/grueneschweiz/onboard-website-plugin
+ * Description:     Automated onboarding of new websites
+ * Author:          grueneschweiz
+ * Author URI:      https://gruene.ch
  * Text Domain:     gruene-onboard
- * Domain Path:     /languages
  * Version:         0.1.0
  *
  * @package         Gruene_Onboard
@@ -172,20 +171,10 @@ EOL;
 	/**
 	 * Clone example site and pre fill it with default content for a party
 	 *
-	 * ## OPTIONS
-	 *
-	 * [--revision=<int>]
-	 * : Sync changes since the given revision id of the CRM. Defaults to revision id at the last successful sync.
-	 *
-	 * ## EXAMPLES
-	 *
-	 * wp efunnel sync
-	 * wp efunnel sync --revision=1234
-	 *
 	 * @when after_wp_load
 	 */
 	public function party() {
-		return 'hello';
+		\WP_CLI::error( "Not yet implemented" );
 	}
 
 	private function extract_lang( $args, $required = true ) {
