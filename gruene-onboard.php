@@ -247,12 +247,12 @@ EOL;
 	}
 
 	private function create_user() {
-		$this->user_name = strtolower( $this->first_name . $this->last_name );
+		$this->user_name = str_replace( '-', '', sanitize_title( $this->first_name . $this->last_name ) );
 		$full_name       = $this->first_name . ' ' . $this->last_name;
 
 		$user = WP_CLI::runcommand(
 			'--url="' . $this->site_url . '" user create ' . $this->user_name . ' ' . $this->email . ' --display_name="' . $full_name . '" ' .
-			'--user_nicename="' . $full_name . '" --first_name="' . $this->first_name . '" --last_name="' . $this->first_name . '"',
+			'--user_nicename="' . $full_name . '" --first_name="' . $this->first_name . '" --last_name="' . $this->last_name . '"',
 			$this->command_exec_options
 		);
 
