@@ -13,10 +13,14 @@
 
 namespace Gruene_Onboard;
 
+use WP_CLI;
+use function json_encode;
+use function sanitize_title;
+
 define( 'COMMAND_NAME', 'onboard' );
 
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
-	\WP_CLI::add_command( COMMAND_NAME, '\Gruene_Onboard\Onboarder' );
+	WP_CLI::add_command( COMMAND_NAME, '\Gruene_Onboard\Onboarder' );
 }
 
 /**
@@ -39,12 +43,12 @@ class Onboarder {
 	private /** @noinspection PhpUnusedPrivateFieldInspection */
 		$person_campaign_cta_de = 'Darum trete ich dem Unterstützungskomitee bei und zeige mit meinem Namen, dass {{first_name}} eine gute Wahl ist.';
 	private /** @noinspection PhpUnusedPrivateFieldInspection */
-	  $person_campaign_cta_fr = '';
+		$person_campaign_cta_fr = '';
 
 	private /** @noinspection PhpUnusedPrivateFieldInspection */
-	  $send_email_de = 'Email senden';
+		$send_email_de = 'Email senden';
 	private /** @noinspection PhpUnusedPrivateFieldInspection */
-	  $send_email_fr = 'Envoyer un e-mail';
+		$send_email_fr = 'Envoyer un e-mail';
 
 	private $person_address = <<<EOL
 <b>{{full_name}}</b>
@@ -135,16 +139,16 @@ EOL;
 	 * @when after_wp_load
 	 */
 	public function person( $args, $assoc_args ) {
-		$this->lang        = $this->extract_lang( $assoc_args );
-		$this->first_name  = ucfirst( $this->extract( $assoc_args, 'first_name' ) );
-		$this->last_name   = ucfirst( $this->extract( $assoc_args, 'last_name' ) );
-		$this->email       = $this->extract_email( $assoc_args, 'email' );
-		$this->city        = $this->extract( $assoc_args, 'city' );
-		$this->blog_desc   = $this->extract( $assoc_args, 'blog_description' );
-		$this->party_name  = $this->extract( $assoc_args, 'party_name' );
-		$this->party_url   = $this->extract_url( $assoc_args, 'party_url' );
-		$this->fb_url      = $this->extract_url( $assoc_args, 'facebook_url', false );
-		$this->tw_name     = $this->extract( $assoc_args, 'twitter_name', false );
+		$this->lang       = $this->extract_lang( $assoc_args );
+		$this->first_name = ucfirst( $this->extract( $assoc_args, 'first_name' ) );
+		$this->last_name  = ucfirst( $this->extract( $assoc_args, 'last_name' ) );
+		$this->email      = $this->extract_email( $assoc_args, 'email' );
+		$this->city       = $this->extract( $assoc_args, 'city' );
+		$this->blog_desc  = $this->extract( $assoc_args, 'blog_description' );
+		$this->party_name = $this->extract( $assoc_args, 'party_name' );
+		$this->party_url  = $this->extract_url( $assoc_args, 'party_url' );
+		$this->fb_url     = $this->extract_url( $assoc_args, 'facebook_url', false );
+		$this->tw_name    = $this->extract( $assoc_args, 'twitter_name', false );
 		$this->insta_url   = $this->extract_url( $assoc_args, 'instagram_url', false );
 		$this->admin_email = $this->extract_email( $assoc_args, 'admin_email' );
 
@@ -161,11 +165,11 @@ EOL;
 		$this->set_footer_address();
 		$this->set_social_media_links();
 
-		\WP_CLI::success( "{$this->first_name} {$this->last_name} onboarded." );
-		\WP_CLI::line( "URL: {$this->site_url}");
-		\WP_CLI::line( "Admin URL: {$this->site_url}/wp-admin");
-		\WP_CLI::line( "Username: {$this->user_name}");
-		\WP_CLI::line( "Password: {$this->password}");
+		WP_CLI::success( "{$this->first_name} {$this->last_name} onboarded." );
+		WP_CLI::line( "URL: {$this->site_url}" );
+		WP_CLI::line( "Admin URL: {$this->site_url}/wp-admin" );
+		WP_CLI::line( "Username: {$this->user_name}" );
+		WP_CLI::line( "Password: {$this->password}" );
 	}
 
 	/**
@@ -174,13 +178,13 @@ EOL;
 	 * @when after_wp_load
 	 */
 	public function party() {
-		\WP_CLI::error( "Not yet implemented" );
+		WP_CLI::error( "Not yet implemented" );
 	}
 
 	private function extract_lang( $args, $required = true ) {
 		$lang = strtolower( $this->extract( $args, 'lang', $required ) );
 		if ( $lang && ! in_array( $lang, [ 'de', 'fr' ] ) ) {
-			\WP_CLI::error( "Invalid language key: $lang" );
+			WP_CLI::error( "Invalid language key: $lang" );
 		}
 
 		return $lang;
@@ -189,7 +193,7 @@ EOL;
 	private function extract_email( $args, $key, $required = true ) {
 		$email = strtolower( $this->extract( $args, $key, $required ) );
 		if ( $email && ! filter_var( $email, FILTER_VALIDATE_EMAIL ) ) {
-			\WP_CLI::error( "Invalid $key: $email" );
+			WP_CLI::error( "Invalid $key: $email" );
 		}
 
 		return $email;
@@ -198,7 +202,7 @@ EOL;
 	private function extract_url( $args, $key, $required = true ) {
 		$url = $this->extract( $args, $key, $required );
 		if ( $url && ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
-			\WP_CLI::error( "Invalid url: $url" );
+			WP_CLI::error( "Invalid url: $url" );
 		}
 
 		return $url;
@@ -219,44 +223,44 @@ EOL;
 		}
 
 		if ( ! array_key_exists( $key, $args ) ) {
-			\WP_CLI::error( "Missing argument: --$key" );
+			WP_CLI::error( "Missing argument: --$key" );
 		}
 
 		return trim( $args[ $key ] );
 	}
 
 	private function clone_site( $source_site_id ) {
-		$slug  = strtolower( $this->first_name . $this->last_name );
+		$slug  = sanitize_title( $this->first_name . $this->last_name );
 		$title = $this->first_name . ' ' . $this->last_name;
 
-		$clone = \WP_CLI::runcommand(
-			'wp site duplicate --slug=' . $slug . ' --title="' . $title . '" --source=' . $source_site_id,
+		$clone = WP_CLI::runcommand(
+			'site duplicate --slug=' . $slug . ' --title="' . $title . '" --source=' . $source_site_id,
 			$this->command_exec_options
 		);
 
 		if ( preg_match( 'https?:\/\/[^\s]+', $clone, $matches ) ) {
 			$this->site_url = $matches[0];
-			\WP_CLI::log( $clone );
+			WP_CLI::log( $clone );
 		} else {
-			\WP_CLI::error( "Unable to parse url from site cloner output: $clone" );
+			WP_CLI::error( "Unable to parse url from site cloner output: $clone" );
 		}
 	}
 
 	private function create_user() {
 		$this->user_name = strtolower( $this->first_name . $this->last_name );
-		$full_name = $this->first_name . ' ' . $this->last_name;
+		$full_name       = $this->first_name . ' ' . $this->last_name;
 
-		$user = \WP_CLI::runcommand(
-			'wp --url="' . $this->site_url . '" user create ' . $this->user_name . ' ' . $this->email . ' --display_name="' . $full_name . '" ' .
+		$user = WP_CLI::runcommand(
+			'--url="' . $this->site_url . '" user create ' . $this->user_name . ' ' . $this->email . ' --display_name="' . $full_name . '" ' .
 			'--user_nicename="' . $full_name . '" --first_name="' . $this->first_name . '" --last_name="' . $this->first_name . '"',
 			$this->command_exec_options
 		);
 
 		if ( preg_match( 'Password: (\w+)', $user, $matches ) ) {
 			$this->password = $matches[1];
-			\WP_CLI::log( $user );
+			WP_CLI::log( $user );
 		} else {
-			\WP_CLI::error( "Unable create user: $user" );
+			WP_CLI::error( "Unable create user: $user" );
 		}
 	}
 
@@ -275,34 +279,34 @@ EOL;
 	}
 
 	private function delete_page( $id ) {
-		$post = \WP_CLI::runcommand(
-			'wp --url="' . $this->site_url . '" post delete --force ' . $id,
+		$post = WP_CLI::runcommand(
+			'--url="' . $this->site_url . '" post delete --force ' . $id,
 			$this->command_exec_options
 		);
 
-		\WP_CLI::log( $post );
+		WP_CLI::log( $post );
 	}
 
 	private function set_campaign_headlines() {
 		$full_name = $this->first_name . ' ' . $this->last_name;
 
-		$post = \WP_CLI::runcommand(
-			'wp --url="' . $this->site_url . '" post meta set ' . $this->person_front_page_id . ' campaign_bars_headlines_green_0_bar "' . $full_name . '"',
+		$post = WP_CLI::runcommand(
+			'--url="' . $this->site_url . '" post meta set ' . $this->person_front_page_id . ' campaign_bars_headlines_green_0_bar "' . $full_name . '"',
 			$this->command_exec_options
 		);
 
-		\WP_CLI::log( $post );
+		WP_CLI::log( $post );
 	}
 
 	private function set_campaign_cta_desc() {
 		$content = str_replace( '{{first_name}}', $this->first_name, $this->{'person_campaign_cta_' . $this->lang} );
 
-		$post = \WP_CLI::runcommand(
-			'wp --url="' . $this->site_url . '" post meta set ' . $this->person_front_page_id . ' campaign_call_to_action_description "' . $content . '"',
+		$post = WP_CLI::runcommand(
+			'--url="' . $this->site_url . '" post meta set ' . $this->person_front_page_id . ' campaign_call_to_action_description "' . $content . '"',
 			$this->command_exec_options
 		);
 
-		\WP_CLI::log( $post );
+		WP_CLI::log( $post );
 	}
 
 	private function set_footer_home_party() {
@@ -344,7 +348,7 @@ EOL;
 		}
 
 		// define which social media fields are available
-		$this->update_option( 'widget_supt_contact_widget-2_social_media', \json_encode( $social ), '--format=json' );
+		$this->update_option( 'widget_supt_contact_widget-2_social_media', json_encode( $social ), '--format=json' );
 	}
 
 	/**
@@ -359,12 +363,12 @@ EOL;
 			$format .= ' ';
 		}
 
-		$option = \WP_CLI::runcommand(
-			'wp --url="' . $this->site_url . '" option update ' . $format . $key . ' "' . $value . '"',
+		$option = WP_CLI::runcommand(
+			'--url="' . $this->site_url . '" option update ' . $format . $key . ' "' . $value . '"',
 			$this->command_exec_options
 		);
 
-		\WP_CLI::log( $option );
+		WP_CLI::log( $option );
 	}
 
 	/**
@@ -381,11 +385,11 @@ EOL;
 			$format .= ' ';
 		}
 
-		$option = \WP_CLI::runcommand(
-			'wp --url="' . $this->site_url . '" option patch ' . $mode . ' ' . $key . ' ' . implode( ' ', $path ) . ' "' . $value . '"' . $format,
+		$option = WP_CLI::runcommand(
+			'--url="' . $this->site_url . '" option patch ' . $mode . ' ' . $key . ' ' . implode( ' ', $path ) . ' "' . $value . '"' . $format,
 			$this->command_exec_options
 		);
 
-		\WP_CLI::log( $option );
+		WP_CLI::log( $option );
 	}
 }
