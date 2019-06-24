@@ -238,7 +238,7 @@ EOL;
 			$this->command_exec_options
 		);
 
-		if ( preg_match( 'https?:\/\/[^\s]+', $clone, $matches ) ) {
+		if ( preg_match( '/https?:\/\/[^\s]+/', $clone, $matches ) ) {
 			$this->site_url = $matches[0];
 			WP_CLI::log( $clone );
 		} else {
@@ -256,7 +256,7 @@ EOL;
 			$this->command_exec_options
 		);
 
-		if ( preg_match( 'Password: (\w+)', $user, $matches ) ) {
+		if ( preg_match( '/Password: (\w+)/', $user, $matches ) ) {
 			$this->password = $matches[1];
 			WP_CLI::log( $user );
 		} else {
