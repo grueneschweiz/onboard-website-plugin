@@ -14,7 +14,6 @@
 namespace Gruene_Onboard;
 
 use WP_CLI;
-use function json_encode;
 use function sanitize_title;
 
 define( 'COMMAND_NAME', 'onboard' );
@@ -54,7 +53,7 @@ class Onboarder {
 <b>{{full_name}}</b>
 {{city}}
 
-<a class="a-button a-button--primary" href="mailto:{{email}}">{{send_email}}</a>
+<a class='a-button a-button--primary' href='mailto:{{email}}'>{{send_email}}</a>
 EOL;
 
 
@@ -158,16 +157,16 @@ EOL;
 		$this->create_user();
 		$this->set_blog_desc();
 		$this->set_admin_email();
-		$this->delete_offer_pages();
 		$this->set_campaign_headlines();
 		$this->set_campaign_cta_desc();
 		$this->set_footer_home_party();
 		$this->set_footer_address();
 		$this->set_social_media_links();
+		$this->delete_offer_pages();
 
 		WP_CLI::success( "{$this->first_name} {$this->last_name} onboarded." );
 		WP_CLI::line( "URL: {$this->site_url}" );
-		WP_CLI::line( "Admin URL: {$this->site_url}/wp-admin" );
+		WP_CLI::line( "Admin URL: {$this->site_url}wp-admin" );
 		WP_CLI::line( "Username: {$this->user_name}" );
 		WP_CLI::line( "Password: {$this->password}" );
 	}
@@ -280,7 +279,7 @@ EOL;
 
 	private function delete_page( $id ) {
 		$post = WP_CLI::runcommand(
-			'--url="' . $this->site_url . '" post delete --force ' . $id,
+			'--url="' . $this->site_url . '" post delete ' . $id . ' --force',
 			$this->command_exec_options
 		);
 
@@ -318,6 +317,7 @@ EOL;
 		$replacements = [
 			'{{full_name}}'  => $this->first_name . ' ' . $this->last_name,
 			'{{city}}'       => $this->city,
+			'{{email}}'      => $this->email,
 			'{{send_email}}' => $this->{'send_email_' . $this->lang},
 		];
 
@@ -327,28 +327,33 @@ EOL;
 	}
 
 	private function set_social_media_links() {
-		$social = [];
+		$i = 0;
 
 		if ( $this->fb_url ) {
-			$social[] = 'facebook';
-			$this->update_option( 'widget_supt_contact_widget-2_social_media_' . ( count( $social ) - 1 ) . '_link', $this->fb_url );
+			$this->update_option( "widget_supt_contact_widget-2_social_media_{$i}_link", $this->fb_url );
+			$this->patch_option( 'update', 'widget_supt_contact_widget-2_social_media', 'facebook', null, $i );
 			$this->patch_option( 'update', 'wpseo_social', $this->fb_url, null, 'facebook_site' );
+			$i ++;
+		} else {
+			$this->patch_option( 'delete', 'widget_supt_contact_widget-2_social_media', '', null, 0 );
 		}
 
 		if ( $this->tw_name ) {
-			$social[] = 'twitter';
-			$this->update_option( 'widget_supt_contact_widget-2_social_media_' . ( count( $social ) - 1 ) . '_link', 'https://twitter.com/' . $this->tw_name );
+			$this->update_option( "widget_supt_contact_widget-2_social_media_{$i}_link", 'https://twitter.com/' . $this->tw_name );
+			$this->patch_option( 'update', 'widget_supt_contact_widget-2_social_media', 'twitter', null, $i );
 			$this->patch_option( 'update', 'wpseo_social', $this->tw_name, null, 'twitter_site' );
+			$i ++;
+		} else {
+			$this->patch_option( 'delete', 'widget_supt_contact_widget-2_social_media', '', null, 1 );
 		}
 
 		if ( $this->insta_url ) {
-			$social[] = 'instagram';
-			$this->update_option( 'widget_supt_contact_widget-2_social_media_' . ( count( $social ) - 1 ) . '_link', $this->insta_url );
+			$this->update_option( "widget_supt_contact_widget-2_social_media_{$i}_link", $this->insta_url );
+			$this->patch_option( 'update', 'widget_supt_contact_widget-2_social_media', 'instagram', null, $i );
 			$this->patch_option( 'update', 'wpseo_social', $this->insta_url, null, 'instagram_url' );
+		} else {
+			$this->patch_option( 'delete', 'widget_supt_contact_widget-2_social_media', '', null, 2 );
 		}
-
-		// define which social media fields are available
-		$this->update_option( 'widget_supt_contact_widget-2_social_media', json_encode( $social ), '--format=json' );
 	}
 
 	/**
