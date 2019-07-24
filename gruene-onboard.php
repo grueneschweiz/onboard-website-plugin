@@ -6,7 +6,7 @@
  * Author:          grueneschweiz
  * Author URI:      https://gruene.ch
  * Text Domain:     gruene-onboard
- * Version:         0.1.0
+ * Version:         1.0.0
  *
  * @package         Gruene_Onboard
  */
@@ -19,6 +19,7 @@ use function sanitize_title;
 define( 'COMMAND_NAME', 'onboard' );
 
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
+	/** @noinspection PhpUnhandledExceptionInspection */ // die hard
 	WP_CLI::add_command( COMMAND_NAME, '\Gruene_Onboard\Onboarder' );
 }
 
@@ -40,9 +41,14 @@ class Onboarder {
 	private $person_front_page_id = 513;
 
 	private /** @noinspection PhpUnusedPrivateFieldInspection */
+		$name_de = 'Peter Muster';
+	private /** @noinspection PhpUnusedPrivateFieldInspection */
+		$name_fr = 'Anne Modèle';
+
+	private /** @noinspection PhpUnusedPrivateFieldInspection */
 		$person_campaign_cta_de = 'Darum trete ich dem Unterstützungskomitee bei und zeige mit meinem Namen, dass {{first_name}} eine gute Wahl ist.';
 	private /** @noinspection PhpUnusedPrivateFieldInspection */
-		$person_campaign_cta_fr = '';
+		$person_campaign_cta_fr = "J'adhère au comité de soutien et je montre par mon nom que {{first_name}} est un bon choix.";
 
 	private /** @noinspection PhpUnusedPrivateFieldInspection */
 		$send_email_de = 'Email senden';
@@ -73,11 +79,6 @@ EOL;
 	private $user_name;
 	private $password;
 
-	private $command_exec_options = array(
-		'return'     => true,   // Return 'STDOUT'; use 'all' for full object.
-		'launch'     => false,  // Reuse the current process.
-		'exit_error' => true,   // Halt script execution on error.
-	);
 
 	/**
 	 * Clone example site and pre fill it with default content for a person
@@ -136,6 +137,11 @@ EOL;
 	 *                   --admin_email="admin@example.com"
 	 *
 	 * @when after_wp_load
+	 *
+	 * @param $args
+	 * @param $assoc_args
+	 *
+	 * @throws WP_CLI\ExitException
 	 */
 	public function person( $args, $assoc_args ) {
 		$this->lang        = $this->extract_lang( $assoc_args );
@@ -163,6 +169,7 @@ EOL;
 		$this->set_social_media_links();
 		$this->delete_offer_pages();
 		$this->set_footer_address();
+		$this->search_replace_name();
 
 		WP_CLI::success( "{$this->first_name} {$this->last_name} onboarded." );
 		WP_CLI::line( "URL: {$this->site_url}" );
@@ -175,11 +182,20 @@ EOL;
 	 * Clone example site and pre fill it with default content for a party
 	 *
 	 * @when after_wp_load
+	 *
+	 * @throws WP_CLI\ExitException
 	 */
 	public function party() {
 		WP_CLI::error( "Not yet implemented" );
 	}
 
+	/**
+	 * @param $args
+	 * @param bool $required
+	 *
+	 * @return string
+	 * @throws WP_CLI\ExitException
+	 */
 	private function extract_lang( $args, $required = true ) {
 		$lang = strtolower( $this->extract( $args, 'lang', $required ) );
 		if ( $lang && ! in_array( $lang, [ 'de', 'fr' ] ) ) {
@@ -189,6 +205,14 @@ EOL;
 		return $lang;
 	}
 
+	/**
+	 * @param $args
+	 * @param $key
+	 * @param bool $required
+	 *
+	 * @return string
+	 * @throws WP_CLI\ExitException
+	 */
 	private function extract_email( $args, $key, $required = true ) {
 		$email = strtolower( $this->extract( $args, $key, $required ) );
 		if ( $email && ! filter_var( $email, FILTER_VALIDATE_EMAIL ) ) {
@@ -198,6 +222,14 @@ EOL;
 		return $email;
 	}
 
+	/**
+	 * @param $args
+	 * @param $key
+	 * @param bool $required
+	 *
+	 * @return string
+	 * @throws WP_CLI\ExitException
+	 */
 	private function extract_url( $args, $key, $required = true ) {
 		$url = $this->extract( $args, $key, $required );
 		if ( $url && ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
@@ -215,6 +247,7 @@ EOL;
 	 * @param bool $required key must be present
 	 *
 	 * @return string
+	 * @throws WP_CLI\ExitException
 	 */
 	private function extract( $args, $key, $required = true ) {
 		if ( ! $required && ! array_key_exists( $key, $args ) ) {
@@ -228,6 +261,11 @@ EOL;
 		return trim( $args[ $key ] );
 	}
 
+	/**
+	 * @param $source_site_id
+	 *
+	 * @throws WP_CLI\ExitException
+	 */
 	private function clone_site( $source_site_id ) {
 		$slug  = sanitize_title( $this->first_name . $this->last_name );
 		$title = $this->first_name . ' ' . $this->last_name;
@@ -248,6 +286,9 @@ EOL;
 		}
 	}
 
+	/**
+	 * @throws WP_CLI\ExitException
+	 */
 	private function create_user() {
 		$this->user_name = str_replace( '-', '', sanitize_title( $this->first_name . $this->last_name ) );
 		$full_name       = $this->first_name . ' ' . $this->last_name;
@@ -423,6 +464,18 @@ EOL;
 		$option = $this->run_cli_command( $command );
 
 		WP_CLI::log( $option );
+	}
+
+	private function search_replace_name() {
+		$command = sprintf( '--url=%s search-replace %s %s',
+			escapeshellarg( $this->site_url ),
+			escapeshellarg( $this->{"name_{$this->lang}"} ),
+			escapeshellarg( $this->first_name . ' ' . $this->last_name )
+		);
+
+		$replace = $this->run_cli_command( $command );
+
+		WP_CLI::log( $replace );
 	}
 
 	/**
