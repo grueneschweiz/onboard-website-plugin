@@ -173,7 +173,7 @@ EOL;
 
 		WP_CLI::success( "{$this->first_name} {$this->last_name} onboarded." );
 		WP_CLI::line( "URL: {$this->site_url}" );
-		WP_CLI::line( "Admin URL: {$this->site_url}wp-admin" );
+		WP_CLI::line( "Admin URL: {$this->site_url}/wp-admin" );
 		WP_CLI::line( "Username: {$this->user_name}" );
 		WP_CLI::line( "Password: {$this->password}" );
 	}
