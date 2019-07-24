@@ -53,7 +53,7 @@ class Onboarder {
 <b>{{full_name}}</b>
 {{city}}
 
-<a class='a-button a-button--primary' href='mailto:{{email}}'>{{send_email}}</a>
+<a class="a-button a-button--primary" href="mailto:{{email}}">{{send_email}}</a>
 EOL;
 
 
@@ -138,16 +138,16 @@ EOL;
 	 * @when after_wp_load
 	 */
 	public function person( $args, $assoc_args ) {
-		$this->lang       = $this->extract_lang( $assoc_args );
-		$this->first_name = ucfirst( $this->extract( $assoc_args, 'first_name' ) );
-		$this->last_name  = ucfirst( $this->extract( $assoc_args, 'last_name' ) );
-		$this->email      = $this->extract_email( $assoc_args, 'email' );
-		$this->city       = $this->extract( $assoc_args, 'city' );
-		$this->blog_desc  = $this->extract( $assoc_args, 'blog_description' );
-		$this->party_name = $this->extract( $assoc_args, 'party_name' );
-		$this->party_url  = $this->extract_url( $assoc_args, 'party_url' );
-		$this->fb_url     = $this->extract_url( $assoc_args, 'facebook_url', false );
-		$this->tw_name    = $this->extract( $assoc_args, 'twitter_name', false );
+		$this->lang        = $this->extract_lang( $assoc_args );
+		$this->first_name  = ucfirst( $this->extract( $assoc_args, 'first_name' ) );
+		$this->last_name   = ucfirst( $this->extract( $assoc_args, 'last_name' ) );
+		$this->email       = $this->extract_email( $assoc_args, 'email' );
+		$this->city        = $this->extract( $assoc_args, 'city' );
+		$this->blog_desc   = $this->extract( $assoc_args, 'blog_description' );
+		$this->party_name  = $this->extract( $assoc_args, 'party_name' );
+		$this->party_url   = $this->extract_url( $assoc_args, 'party_url' );
+		$this->fb_url      = $this->extract_url( $assoc_args, 'facebook_url', false );
+		$this->tw_name     = $this->extract( $assoc_args, 'twitter_name', false );
 		$this->insta_url   = $this->extract_url( $assoc_args, 'instagram_url', false );
 		$this->admin_email = $this->extract_email( $assoc_args, 'admin_email' );
 
@@ -160,9 +160,9 @@ EOL;
 		$this->set_campaign_headlines();
 		$this->set_campaign_cta_desc();
 		$this->set_footer_home_party();
-		$this->set_footer_address();
 		$this->set_social_media_links();
 		$this->delete_offer_pages();
+		$this->set_footer_address();
 
 		WP_CLI::success( "{$this->first_name} {$this->last_name} onboarded." );
 		WP_CLI::line( "URL: {$this->site_url}" );
@@ -232,10 +232,13 @@ EOL;
 		$slug  = sanitize_title( $this->first_name . $this->last_name );
 		$title = $this->first_name . ' ' . $this->last_name;
 
-		$clone = WP_CLI::runcommand(
-			'site duplicate --slug=' . $slug . ' --title="' . $title . '" --source=' . $source_site_id,
-			$this->command_exec_options
+		$command = sprintf(
+			'site duplicate --slug=%s --title=%s --source=%d',
+			$slug,
+			escapeshellarg( $title ),
+			$source_site_id
 		);
+		$clone   = $this->run_cli_command( $command );
 
 		if ( preg_match( '/https?:\/\/[^\s]+/', $clone, $matches ) ) {
 			$this->site_url = $matches[0];
@@ -249,11 +252,18 @@ EOL;
 		$this->user_name = str_replace( '-', '', sanitize_title( $this->first_name . $this->last_name ) );
 		$full_name       = $this->first_name . ' ' . $this->last_name;
 
-		$user = WP_CLI::runcommand(
-			'--url="' . $this->site_url . '" user create ' . $this->user_name . ' ' . $this->email . ' --display_name="' . $full_name . '" ' .
-			'--user_nicename="' . $full_name . '" --first_name="' . $this->first_name . '" --last_name="' . $this->last_name . '"',
-			$this->command_exec_options
+		$command = sprintf( '--url=%s user create %s %s --role=administrator --display_name=%s ' .
+		                    '--user_nicename=%s --first_name=%s --last_name=%s',
+			escapeshellarg( $this->site_url ),
+			$this->user_name,
+			escapeshellarg( $this->email ),
+			escapeshellarg( $full_name ),
+			escapeshellarg( $full_name ),
+			escapeshellarg( $this->first_name ),
+			escapeshellarg( $this->last_name )
 		);
+
+		$user = $this->run_cli_command( $command );
 
 		if ( preg_match( '/Password: ([^\s]+)/', $user, $matches ) ) {
 			$this->password = $matches[1];
@@ -278,10 +288,11 @@ EOL;
 	}
 
 	private function delete_page( $id ) {
-		$post = WP_CLI::runcommand(
-			'--url="' . $this->site_url . '" post delete ' . $id . ' --force',
-			$this->command_exec_options
+		$command = sprintf( '--url=%s post delete %d --force',
+			escapeshellarg( $this->site_url ),
+			$id
 		);
+		$post    = $this->run_cli_command( $command );
 
 		WP_CLI::log( $post );
 	}
@@ -289,10 +300,13 @@ EOL;
 	private function set_campaign_headlines() {
 		$full_name = $this->first_name . ' ' . $this->last_name;
 
-		$post = WP_CLI::runcommand(
-			'--url="' . $this->site_url . '" post meta set ' . $this->person_front_page_id . ' campaign_bars_headlines_green_0_bar "' . $full_name . '"',
-			$this->command_exec_options
+		$command = sprintf( '--url=%s post meta set %d campaign_bars_headlines_green_0_bar %s',
+			escapeshellarg( $this->site_url ),
+			$this->person_front_page_id,
+			escapeshellarg( $full_name )
 		);
+
+		$post = $this->run_cli_command( $command );
 
 		WP_CLI::log( $post );
 	}
@@ -300,10 +314,13 @@ EOL;
 	private function set_campaign_cta_desc() {
 		$content = str_replace( '{{first_name}}', $this->first_name, $this->{'person_campaign_cta_' . $this->lang} );
 
-		$post = WP_CLI::runcommand(
-			'--url="' . $this->site_url . '" post meta set ' . $this->person_front_page_id . ' campaign_call_to_action_description "' . $content . '"',
-			$this->command_exec_options
+		$command = sprintf( '--url=%s post meta set %d campaign_call_to_action_description %s',
+			escapeshellarg( $this->site_url ),
+			$this->person_front_page_id,
+			escapeshellarg( $content )
 		);
+
+		$post = $this->run_cli_command( $command );
 
 		WP_CLI::log( $post );
 	}
@@ -368,10 +385,14 @@ EOL;
 			$format .= ' ';
 		}
 
-		$option = WP_CLI::runcommand(
-			'--url="' . $this->site_url . '" option update ' . $format . $key . ' "' . $value . '"',
-			$this->command_exec_options
+		$command = sprintf( '--url=%s option update %s %s %s',
+			escapeshellarg( $this->site_url ),
+			$format,
+			$key,
+			escapeshellarg( $value )
 		);
+
+		$option = $this->run_cli_command( $command );
 
 		WP_CLI::log( $option );
 	}
@@ -390,11 +411,34 @@ EOL;
 			$format .= ' ';
 		}
 
-		$option = WP_CLI::runcommand(
-			'--url="' . $this->site_url . '" option patch ' . $mode . ' ' . $key . ' ' . implode( ' ', $path ) . ' "' . $value . '"' . $format,
-			$this->command_exec_options
+		$command = sprintf( '--url=%s option patch %s %s %s %s %s',
+			escapeshellarg( $this->site_url ),
+			$mode,
+			$key,
+			implode( ' ', $path ),
+			escapeshellarg( $value ),
+			$format
 		);
 
+		$option = $this->run_cli_command( $command );
+
 		WP_CLI::log( $option );
+	}
+
+	/**
+	 * Log and run cli command
+	 *
+	 * @param string $command
+	 *
+	 * @return mixed
+	 */
+	private function run_cli_command( $command ) {
+		WP_CLI::line( 'Running Command: wp ' . $command );
+
+		// run the command directly with shell_exec because WP_CLI::runcommand is buggy if you need quoted associated
+		// arguments and WP_CLI::run_command doesn't let you capture the output
+		$out = shell_exec( 'wp ' . $command );
+
+		return $out;
 	}
 }
