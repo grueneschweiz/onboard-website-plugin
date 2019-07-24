@@ -44,6 +44,14 @@ class Onboarder {
 		$name_de = 'Peter Muster';
 	private /** @noinspection PhpUnusedPrivateFieldInspection */
 		$name_fr = 'Anne Modèle';
+	private /** @noinspection PhpUnusedPrivateFieldInspection */
+		$first_name_de = 'Peter';
+	private /** @noinspection PhpUnusedPrivateFieldInspection */
+		$first_name_fr = 'Anne';
+	private /** @noinspection PhpUnusedPrivateFieldInspection */
+		$email_de = 'mail@petermuster123.ch';
+	private /** @noinspection PhpUnusedPrivateFieldInspection */
+		$email_fr = 'mail@annemodele123.ch';
 
 	private /** @noinspection PhpUnusedPrivateFieldInspection */
 		$person_campaign_cta_de = 'Darum trete ich dem Unterstützungskomitee bei und zeige mit meinem Namen, dass {{first_name}} eine gute Wahl ist.';
@@ -169,7 +177,9 @@ EOL;
 		$this->set_social_media_links();
 		$this->delete_offer_pages();
 		$this->set_footer_address();
-		$this->search_replace_name();
+		$this->search_replace_full_name();
+		$this->search_replace_first_name();
+		$this->search_replace_email();
 
 		WP_CLI::success( "{$this->first_name} {$this->last_name} onboarded." );
 		WP_CLI::line( "URL: {$this->site_url}" );
@@ -466,11 +476,35 @@ EOL;
 		WP_CLI::log( $option );
 	}
 
-	private function search_replace_name() {
+	private function search_replace_full_name() {
 		$command = sprintf( '--url=%s search-replace %s %s',
 			escapeshellarg( $this->site_url ),
 			escapeshellarg( $this->{"name_{$this->lang}"} ),
 			escapeshellarg( $this->first_name . ' ' . $this->last_name )
+		);
+
+		$replace = $this->run_cli_command( $command );
+
+		WP_CLI::log( $replace );
+	}
+
+	private function search_replace_first_name() {
+		$command = sprintf( '--url=%s search-replace %s %s',
+			escapeshellarg( $this->site_url ),
+			escapeshellarg( $this->{"first_name_{$this->lang}"} ),
+			escapeshellarg( $this->first_name )
+		);
+
+		$replace = $this->run_cli_command( $command );
+
+		WP_CLI::log( $replace );
+	}
+
+	private function search_replace_email() {
+		$command = sprintf( '--url=%s search-replace %s %s',
+			escapeshellarg( $this->site_url ),
+			escapeshellarg( $this->{"email_{$this->lang}"} ),
+			escapeshellarg( $this->email )
 		);
 
 		$replace = $this->run_cli_command( $command );
