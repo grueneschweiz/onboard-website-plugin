@@ -63,6 +63,11 @@ class Onboarder {
 	private /** @noinspection PhpUnusedPrivateFieldInspection */
 		$send_email_fr = 'Envoyer un e-mail';
 
+	private /** @noinspection PhpUnusedPrivateFieldInspection */
+		$maintenance_message_de = 'Demnächst Online.';
+	private /** @noinspection PhpUnusedPrivateFieldInspection */
+		$maintenance_message_fr = 'Bientôt en ligne.';
+
 	private $person_address = <<<EOL
 <b>{{full_name}}</b>
 {{city}}
@@ -180,6 +185,7 @@ EOL;
 		$this->search_replace_full_name();
 		$this->search_replace_first_name();
 		$this->search_replace_email();
+		$this->activate_maintenance_mode();
 
 		WP_CLI::success( "{$this->first_name} {$this->last_name} onboarded." );
 		WP_CLI::line( "URL: {$this->site_url}" );
@@ -551,6 +557,52 @@ EOL;
 		$replace = $this->run_cli_command( $command );
 
 		WP_CLI::log( $replace );
+	}
+
+	private function activate_maintenance_mode(){
+		// activate plugin
+		$command = sprintf( '--url=%s plugin activate wp-maintenance-mode',
+			escapeshellarg( $this->site_url )
+		);
+
+		$this->run_cli_command( $command );
+
+		// enable maintenance mode
+		$command = sprintf( '--url=%s option patch update wpmm_settings general status 1',
+			escapeshellarg( $this->site_url )
+		);
+
+		$this->run_cli_command( $command );
+
+		// show dashboard link
+		$command = sprintf( '--url=%s option patch update wpmm_settings general admin_link 1',
+			escapeshellarg( $this->site_url )
+		);
+
+		$this->run_cli_command( $command );
+
+		// set title
+		$command = sprintf( '--url=%s option patch update wpmm_settings design title %s',
+			escapeshellarg( $this->site_url ),
+			escapeshellarg( $this->{"maintenance_message_{$this->lang}"} )
+		);
+
+		$this->run_cli_command( $command );
+
+		// set message title
+		$command = sprintf( '--url=%s option patch update wpmm_settings design heading %s',
+			escapeshellarg( $this->site_url ),
+			escapeshellarg( $this->{"maintenance_message_{$this->lang}"} )
+		);
+
+		$this->run_cli_command( $command );
+
+		// set message body
+		$command = sprintf( '--url=%s option patch update wpmm_settings design text ""',
+			escapeshellarg( $this->site_url )
+		);
+
+		$this->run_cli_command( $command );
 	}
 
 	/**
