@@ -161,7 +161,7 @@ EOL;
 		$this->party_name  = $this->extract( $assoc_args, 'party_name' );
 		$this->party_url   = $this->extract_url( $assoc_args, 'party_url' );
 		$this->fb_url      = $this->extract_url( $assoc_args, 'facebook_url', false );
-		$this->tw_name     = $this->extract( $assoc_args, 'twitter_name', false );
+		$this->tw_name     = $this->extract_twitter_name( $assoc_args, 'twitter_name', false );
 		$this->insta_url   = $this->extract_url( $assoc_args, 'instagram_url', false );
 		$this->admin_email = $this->extract_email( $assoc_args, 'admin_email' );
 
@@ -269,6 +269,27 @@ EOL;
 		}
 
 		return trim( $args[ $key ] );
+	}
+
+	/**
+	 * Extracts the twitter name, even if the twitter url was given.
+	 *
+	 * @param $args
+	 * @param $key
+	 * @param bool $required
+	 *
+	 * @return string
+	 */
+	private function extract_twitter_name( $args, $key, $required = true ) {
+		$url = $this->extract( $args, $key, $required );
+
+		$domain_regex = '/^(https?:\/\/)?(www\.)?twitter\.com\//';
+		$without_domain = preg_replace($domain_regex, '', $url );
+
+		$sufix_regex = '/\/.*$/';
+		$plain_name = preg_replace($sufix_regex, '', $without_domain );
+
+		return $plain_name;
 	}
 
 	/**
@@ -399,28 +420,32 @@ EOL;
 
 		if ( $this->fb_url ) {
 			$this->update_option( "widget_supt_contact_widget-2_social_media_{$i}_link", $this->fb_url );
-			$this->patch_option( 'update', 'widget_supt_contact_widget-2_social_media', 'facebook', null, $i );
-			$this->patch_option( 'update', 'wpseo_social', $this->fb_url, null, 'facebook_site' );
+			$this->patch_option_insert( 'widget_supt_contact_widget-2_social_media', 'facebook', null, $i );
+			$this->patch_option_insert( 'wpseo_social', $this->fb_url, null, 'facebook_site' );
 			$i ++;
 		} else {
-			$this->patch_option( 'delete', 'widget_supt_contact_widget-2_social_media', '', null, 0 );
+			$this->patch_option_delete( 'widget_supt_contact_widget-2_social_media', $i );
 		}
 
 		if ( $this->tw_name ) {
 			$this->update_option( "widget_supt_contact_widget-2_social_media_{$i}_link", 'https://twitter.com/' . $this->tw_name );
-			$this->patch_option( 'update', 'widget_supt_contact_widget-2_social_media', 'twitter', null, $i );
-			$this->patch_option( 'update', 'wpseo_social', $this->tw_name, null, 'twitter_site' );
+			$this->patch_option_insert( 'widget_supt_contact_widget-2_social_media', 'twitter', null, $i );
+			$this->patch_option_insert( 'wpseo_social', $this->tw_name, null, 'twitter_site' );
 			$i ++;
 		} else {
-			$this->patch_option( 'delete', 'widget_supt_contact_widget-2_social_media', '', null, 1 );
+			$this->patch_option_delete( 'widget_supt_contact_widget-2_social_media', $i );
 		}
 
 		if ( $this->insta_url ) {
 			$this->update_option( "widget_supt_contact_widget-2_social_media_{$i}_link", $this->insta_url );
-			$this->patch_option( 'update', 'widget_supt_contact_widget-2_social_media', 'instagram', null, $i );
-			$this->patch_option( 'update', 'wpseo_social', $this->insta_url, null, 'instagram_url' );
+			$this->patch_option_insert( 'widget_supt_contact_widget-2_social_media', 'instagram', null, $i );
+			$this->patch_option_insert( 'wpseo_social', $this->insta_url, null, 'instagram_url' );
 		} else {
-			$this->patch_option( 'delete', 'widget_supt_contact_widget-2_social_media', '', null, 2 );
+			$this->patch_option_delete( 'widget_supt_contact_widget-2_social_media', $i );
+		}
+
+		for ( $j = 2; $j > $i; $j-- ) {
+			$this->patch_option_delete( 'widget_supt_contact_widget-2_social_media', $j );
 		}
 	}
 
@@ -449,26 +474,42 @@ EOL;
 	}
 
 	/**
-	 * Update an option field
+	 * Upsert a nested option field
 	 *
-	 * @param string $mode
 	 * @param string $key
 	 * @param string $value
 	 * @param string|null|false $format as it is entered in the cli. eg: --format=json
 	 * @param string ...$path the sub key path to the value
 	 */
-	private function patch_option( $mode, $key, $value, $format, ...$path ) {
+	private function patch_option_insert( $key, $value, $format, ...$path ) {
 		if ( $format ) {
 			$format .= ' ';
 		}
 
-		$command = sprintf( '--url=%s option patch %s %s %s %s %s',
+		$command = sprintf( '--url=%s option patch insert %s %s %s %s',
 			escapeshellarg( $this->site_url ),
-			$mode,
 			$key,
 			implode( ' ', $path ),
 			escapeshellarg( $value ),
 			$format
+		);
+
+		$option = $this->run_cli_command( $command );
+
+		WP_CLI::log( $option );
+	}
+
+	/**
+	 * Delete a nested option field
+	 *
+	 * @param string $key
+	 * @param string ...$path the sub key path to the value
+	 */
+	private function patch_option_delete( $key, ...$path ) {
+		$command = sprintf( '--url=%s option patch delete %s %s',
+			escapeshellarg( $this->site_url ),
+			$key,
+			implode( ' ', $path )
 		);
 
 		$option = $this->run_cli_command( $command );
