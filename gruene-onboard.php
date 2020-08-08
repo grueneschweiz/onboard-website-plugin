@@ -37,6 +37,9 @@ class Onboarder {
 	const PERSON_SITE_ID_DE = 4;
 	const PERSON_SITE_ID_FR = 8;
 
+	const PLAN_ALL_INVLUSIVE = 'all_inclusive';
+	const PLAN_MINIMAL = 'minimal';
+
 	private $person_offer_site_ids = [ 653, 624, 648 ];
 	private $person_front_page_id = 513;
 
@@ -75,7 +78,64 @@ class Onboarder {
 <a class="a-button a-button--primary" href="mailto:{{email}}">{{send_email}}</a>
 EOL;
 
+	private $mail_de = <<<EOL
+Salut {{first_name}}
 
+Cool, vielen Dank für deine Bestellung. Ich habe deine Website soeben eingerichtet. Sie hat etwas Musterinhalt drauf, den du anpassen oder löschen kannst, so wie es für dich am Einfachsten ist. Die Website ist noch gesperrt, sodass sie nur eingeloggte User sehen können.
+
+{{credentials}}
+
+Eine Anleitung fürs Bearbeiten der Website findest du hier: https://docs.gruene.ch
+
+Wie sieht es aus bezüglich Domain (Internetadresse)? Hast du bereits eine? Falls nein, kannst du beispielsweise bei Infomaniak eine kaufen: https://www.infomaniak.com/de/domains
+
+Damit wir die Website auf deine Domain umstellen können, müsstest du als Nameserver folgendes eintragen:
+    • ns1.cyon.ch
+    • ns2.cyon.ch
+    • ggf. weitere Zeilen löschen / leer lassen
+Bitte melde dich vorgängig, damit wir die nötigen Änderungen auch bei der Website vornehmen können.
+
+Unabhängig von der Domain, kannst du bereits jetzt beginnen, deine Inhalte einzufügen etc.
+
+{{support}}
+
+Herzlich,
+Cyrill
+EOL;
+
+	private $mail_fr = <<<EOL
+Bonjour {{first_name}},
+
+Cool, merci pour ta commande. Je viens de mettre en place ton site web. Il contient des exemples de contenu que tu peux personnaliser ou supprimer, selon ce qui est le plus facile pour toi. Le site est toujours verrouillé, de sorte que seuls les utilisateurs connectés peuvent le voir.
+
+{{credentials}}
+
+Des instructions pour l'édition du site web sont disponibles ici : https://docs.gruene.ch
+
+Quelle est la situation concernant le domaine (adresse internet) ? En as-tu déjà un ? Sinon, tu peux en acheter un chez Infomaniak par exemple : https://www.infomaniak.com/fr/domaines
+
+Pour nous permettre de passer du site web à ton domaine, tu dois entrer ce qui suit comme serveur de nom :
+- ns1.cyon.ch
+- ns2.cyon.ch
+- si nécessaire, supprimer / laisser les lignes supplémentaires vides
+Merci de nous contacter à l'avance afin que nous puissions apporter les modifications nécessaires au site web.
+
+Quel que soit le domaine, tu peux déjà commencer à ajouter ton contenu, etc.
+
+{{support}}
+
+Cordialement,
+Cyrill
+EOL;
+
+
+	private $support_minimal_de = "Gerne weisen wir nochmals darauf hin, dass bei der Variante Minimal keine Supportanfragen beantwortet werden.";
+	private $support_minimal_fr = "Nous tenons à souligner qu'il n'est pas répondu aux demandes d'assistance avec la variante Minimal.";
+	private $support_all_inclusive_de = "Melde dich, falls du Hilfe brauchst, insbesondere auch bei der Domain.";
+	private $support_all_inclusive_fr = "Pour toute aide, notamment en ce qui concerne le domaine, nous restons à ta disponsition.";
+
+
+	private $plan;
 	private $lang;
 	private $first_name;
 	private $last_name;
@@ -98,13 +158,16 @@ EOL;
 	 *
 	 * ## OPTIONS
 	 *
+	 * [--plan=<all_inclusive|minimal>]
+	 * : The subscription plan the person ordered
+	 *
 	 * [--lang=<de|fr>]
 	 * : The first name of the person
 	 *
-	 * [--first_name=<first-name>]
+	 * [--first_name=<first_name>]
 	 * : The first name of the person
 	 *
-	 * [--last_name=<last-name>]
+	 * [--last_name=<last_name>]
 	 * : The last name of the person
 	 *
 	 * [--email=<email>]
@@ -136,7 +199,8 @@ EOL;
 	 *
 	 * ## EXAMPLES
 	 *
-	 * wp onboard person --lang=de \
+	 * wp onboard person --plan="all_inclusive"
+	 *                   --lang=de \
 	 *                   --first_name="Peter" \
 	 *                   --last_name="Muster" \
 	 *                   --email="peter.muster@example.com" \
@@ -149,6 +213,13 @@ EOL;
 	 *                   --instagram_url="https://www.instagram.com/petermuster" \
 	 *                   --admin_email="admin@example.com"
 	 *
+	 * wp onboard person --plan="minimal"
+	 *                   --lang=de \
+	 *                   --first_name="Peter" \
+	 *                   --last_name="Muster" \
+	 *                   --email="peter.muster@example.com" \
+	 *                   --admin_email="admin@example.com"
+	 *
 	 * @when after_wp_load
 	 *
 	 * @param $args
@@ -157,41 +228,44 @@ EOL;
 	 * @throws WP_CLI\ExitException
 	 */
 	public function person( $args, $assoc_args ) {
+		$this->plan        = $this->extract_plan( $assoc_args );
 		$this->lang        = $this->extract_lang( $assoc_args );
 		$this->first_name  = ucfirst( $this->extract( $assoc_args, 'first_name' ) );
 		$this->last_name   = ucfirst( $this->extract( $assoc_args, 'last_name' ) );
 		$this->email       = $this->extract_email( $assoc_args, 'email' );
-		$this->city        = $this->extract( $assoc_args, 'city' );
-		$this->blog_desc   = $this->extract( $assoc_args, 'blog_description' );
-		$this->party_name  = $this->extract( $assoc_args, 'party_name' );
-		$this->party_url   = $this->extract_url( $assoc_args, 'party_url' );
-		$this->fb_url      = $this->extract_url( $assoc_args, 'facebook_url', false );
-		$this->tw_name     = $this->extract_twitter_name( $assoc_args, 'twitter_name', false );
-		$this->insta_url   = $this->extract_url( $assoc_args, 'instagram_url', false );
 		$this->admin_email = $this->extract_email( $assoc_args, 'admin_email' );
+
+		if ( self::PLAN_ALL_INVLUSIVE === $this->plan ) {
+			$this->city       = $this->extract( $assoc_args, 'city' );
+			$this->blog_desc  = $this->extract( $assoc_args, 'blog_description' );
+			$this->party_name = $this->extract( $assoc_args, 'party_name' );
+			$this->party_url  = $this->extract_url( $assoc_args, 'party_url' );
+			$this->fb_url     = $this->extract_url( $assoc_args, 'facebook_url', false );
+			$this->tw_name    = $this->extract_twitter_name( $assoc_args, 'twitter_name', false );
+			$this->insta_url  = $this->extract_url( $assoc_args, 'instagram_url', false );
+		}
 
 		$site_id = 'de' === $this->lang ? self::PERSON_SITE_ID_DE : self::PERSON_SITE_ID_FR;
 
 		$this->clone_site( $site_id );
 		$this->create_user();
-		$this->set_blog_desc();
 		$this->set_admin_email();
-		$this->set_campaign_headlines();
-		$this->set_campaign_cta_desc();
-		$this->set_footer_home_party();
-		$this->set_social_media_links();
 		$this->delete_offer_pages();
-		$this->set_footer_address();
-		$this->search_replace_full_name();
-		$this->search_replace_first_name();
-		$this->search_replace_email();
 		$this->activate_maintenance_mode();
 
-		WP_CLI::success( "{$this->first_name} {$this->last_name} onboarded." );
-		WP_CLI::line( "URL: {$this->site_url}" );
-		WP_CLI::line( "Admin URL: {$this->site_url}/wp-admin" );
-		WP_CLI::line( "Username: {$this->user_name}" );
-		WP_CLI::line( "Password: {$this->password}" );
+		if ( self::PLAN_ALL_INVLUSIVE === $this->plan ) {
+			$this->set_blog_desc();
+			$this->set_campaign_headlines();
+			$this->set_campaign_cta_desc();
+			$this->set_footer_home_party();
+			$this->set_social_media_links();
+			$this->set_footer_address();
+			$this->search_replace_full_name();
+			$this->search_replace_first_name();
+			$this->search_replace_email();
+		}
+
+		$this->show_onboarding_mail();
 	}
 
 	/**
@@ -205,6 +279,15 @@ EOL;
 		WP_CLI::error( "Not yet implemented" );
 	}
 
+	private function extract_plan( $args, $required = true ) {
+		$plan = $this->extract( $args, 'plan', $required );
+		if ( $plan && ! in_array( $plan, [ self::PLAN_ALL_INVLUSIVE, self::PLAN_MINIMAL ] ) ) {
+			WP_CLI::error( "Invalid value for --plan: '$plan'. Allowed values are '" . self::PLAN_ALL_INVLUSIVE . "' and '" . self::PLAN_MINIMAL . "'." );
+		}
+
+		return $plan;
+	}
+
 	/**
 	 * @param $args
 	 * @param bool $required
@@ -215,7 +298,7 @@ EOL;
 	private function extract_lang( $args, $required = true ) {
 		$lang = strtolower( $this->extract( $args, 'lang', $required ) );
 		if ( $lang && ! in_array( $lang, [ 'de', 'fr' ] ) ) {
-			WP_CLI::error( "Invalid language key: $lang" );
+			WP_CLI::error( "Invalid value for --lang: '$lang'. Allowed values are 'de' and 'fr'." );
 		}
 
 		return $lang;
@@ -289,11 +372,11 @@ EOL;
 	private function extract_twitter_name( $args, $key, $required = true ) {
 		$url = $this->extract( $args, $key, $required );
 
-		$domain_regex = '/^(https?:\/\/)?(www\.)?twitter\.com\//';
-		$without_domain = preg_replace($domain_regex, '', $url );
+		$domain_regex   = '/^(https?:\/\/)?(www\.)?twitter\.com\//';
+		$without_domain = preg_replace( $domain_regex, '', $url );
 
 		$sufix_regex = '/\/.*$/';
-		$plain_name = preg_replace($sufix_regex, '', $without_domain );
+		$plain_name  = preg_replace( $sufix_regex, '', $without_domain );
 
 		return $plain_name;
 	}
@@ -450,7 +533,7 @@ EOL;
 			$this->patch_option_delete( 'widget_supt_contact_widget-2_social_media', $i );
 		}
 
-		for ( $j = 2; $j > $i; $j-- ) {
+		for ( $j = 2; $j > $i; $j -- ) {
 			$this->patch_option_delete( 'widget_supt_contact_widget-2_social_media', $j );
 		}
 	}
@@ -559,7 +642,7 @@ EOL;
 		WP_CLI::log( $replace );
 	}
 
-	private function activate_maintenance_mode(){
+	private function activate_maintenance_mode() {
 		// activate plugin
 		$command = sprintf( '--url=%s plugin activate wp-maintenance-mode',
 			escapeshellarg( $this->site_url )
@@ -613,12 +696,38 @@ EOL;
 	 * @return mixed
 	 */
 	private function run_cli_command( $command ) {
-		WP_CLI::line( 'Running Command: wp ' . $command );
+		WP_CLI::debug( 'Running Command: wp ' . $command );
 
 		// run the command directly with shell_exec because WP_CLI::runcommand is buggy if you need quoted associated
 		// arguments and WP_CLI::run_command doesn't let you capture the output
 		$out = shell_exec( 'wp ' . $command );
 
 		return $out;
+	}
+
+	private function show_onboarding_mail() {
+		$credentials = <<<EOL
+Link: {$this->site_url}
+Login: {$this->site_url}/wp-admin
+Username: {$this->user_name}
+Password: {$this->password}
+EOL;
+
+		$raw_message  = $this->{"mail_{$this->lang}"};
+		$replacements = [
+			'{{first_name}}'  => $this->first_name,
+			'{{credentials}}' => $credentials,
+			'{{support}}'     => $this->{"support_{$this->plan}_{$this->lang}"}
+		];
+
+		$message = str_replace( array_keys( $replacements ), array_values( $replacements ), $raw_message );
+
+		WP_CLI::success( "{$this->first_name} {$this->last_name} onboarded. ".
+		                 "Send {$this->first_name} ({$this->email}) the following mail: " );
+
+		$lines = explode( "\n", $message );
+		foreach ( $lines as $line ) {
+			WP_CLI::line( $line );
+		}
 	}
 }
