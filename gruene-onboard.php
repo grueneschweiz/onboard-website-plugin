@@ -83,7 +83,8 @@ Salut {{first_name}}
 
 Cool, vielen Dank für deine Bestellung. Ich habe deine Website soeben eingerichtet. Sie hat etwas Musterinhalt drauf, den du anpassen oder löschen kannst, so wie es für dich am Einfachsten ist. Die Website ist noch gesperrt, sodass sie nur eingeloggte User sehen können.
 
-{{credentials}}
+{{links}}
+Einloggen kannst du dich mit dem GRÜNEN-Login (das gleiche Login wie für den Chat, das Wiki, das CD-Tool etc.). Wenn du noch kein Login hast, kannst du dich selbst registrieren. Klicke dazu einfach auf 'Registrieren' und trage dich mit der folgenden E-Mail-Adresse ein {{email}}.
 
 Eine Anleitung fürs Bearbeiten der Website findest du hier: https://docs.gruene.ch
 
@@ -108,7 +109,8 @@ Bonjour {{first_name}},
 
 Cool, merci pour ta commande. Je viens de mettre en place ton site web. Il contient des exemples de contenu que tu peux personnaliser ou supprimer, selon ce qui est le plus facile pour toi. Le site est toujours verrouillé, de sorte que seuls les utilisateurs connectés peuvent le voir.
 
-{{credentials}}
+{{links}}
+Tu peux te connecter avec le login VERT (le même login que pour le chat, le wiki etc.) Si tu n'as pas encore de login, tu peux t'enregistrer. Il suffit de cliquer sur "S'inscrire" sur l'écran de connexion et de saisir l'adresse électronique suivante {{email}}.
 
 Des instructions pour l'édition du site web sont disponibles ici : https://docs.gruene.ch
 
@@ -706,17 +708,16 @@ EOL;
 	}
 
 	private function show_onboarding_mail() {
-		$credentials = <<<EOL
+		$links = <<<EOL
 Link: {$this->site_url}
 Login: {$this->site_url}/wp-admin
-Username: {$this->user_name}
-Password: {$this->password}
 EOL;
 
 		$raw_message  = $this->{"mail_{$this->lang}"};
 		$replacements = [
 			'{{first_name}}'  => $this->first_name,
-			'{{credentials}}' => $credentials,
+			'{{links}}' => $links,
+			'{{email}}' => $this->email,
 			'{{support}}'     => $this->{"support_{$this->plan}_{$this->lang}"}
 		];
 
@@ -731,3 +732,4 @@ EOL;
 		}
 	}
 }
+
