@@ -646,28 +646,21 @@ EOL;
 
 	private function activate_maintenance_mode() {
 		// activate plugin
-		$command = sprintf( '--url=%s plugin activate wp-maintenance-mode',
+		$command = sprintf( '--url=%s plugin activate underconstruction',
 			escapeshellarg( $this->site_url )
 		);
 
 		$this->run_cli_command( $command );
 
 		// enable maintenance mode
-		$command = sprintf( '--url=%s option patch update wpmm_settings general status 1',
-			escapeshellarg( $this->site_url )
-		);
-
-		$this->run_cli_command( $command );
-
-		// show dashboard link
-		$command = sprintf( '--url=%s option patch update wpmm_settings general admin_link 1',
+		$command = sprintf( '--url=%s option set underConstructionActivationStatus 1',
 			escapeshellarg( $this->site_url )
 		);
 
 		$this->run_cli_command( $command );
 
 		// set title
-		$command = sprintf( '--url=%s option patch update wpmm_settings design title %s',
+		$command = sprintf( '--url=%s option patch update underConstructionCustomText pageTitle %s',
 			escapeshellarg( $this->site_url ),
 			escapeshellarg( $this->{"maintenance_message_{$this->lang}"} )
 		);
@@ -675,7 +668,7 @@ EOL;
 		$this->run_cli_command( $command );
 
 		// set message title
-		$command = sprintf( '--url=%s option patch update wpmm_settings design heading %s',
+		$command = sprintf( '--url=%s option patch update underConstructionCustomText headerText %s',
 			escapeshellarg( $this->site_url ),
 			escapeshellarg( $this->{"maintenance_message_{$this->lang}"} )
 		);
@@ -683,7 +676,14 @@ EOL;
 		$this->run_cli_command( $command );
 
 		// set message body
-		$command = sprintf( '--url=%s option patch update wpmm_settings design text ""',
+		$command = sprintf( '--url=%s option patch update underConstructionCustomText bodyText ""',
+			escapeshellarg( $this->site_url )
+		);
+
+		$this->run_cli_command( $command );
+
+		// set mode
+		$command = sprintf( '--url=%s option patch set underConstructionDisplayOption 1',
 			escapeshellarg( $this->site_url )
 		);
 
