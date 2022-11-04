@@ -15,6 +15,8 @@ namespace Gruene_Onboard;
 
 use WP_CLI;
 use function sanitize_title;
+use function network_site_url;
+use function network_admin_url;
 
 define( 'COMMAND_NAME', 'onboard' );
 
@@ -389,20 +391,26 @@ EOL;
 		$slug  = sanitize_title( $this->first_name . $this->last_name );
 		$title = $this->first_name . ' ' . $this->last_name;
 
-		$command = sprintf(
-			'site duplicate --slug=%s --title=%s --source=%d',
-			$slug,
-			escapeshellarg( $title ),
-			$source_site_id
-		);
-		$clone   = $this->run_cli_command( $command );
+		if ( ! $this->site_exists( $slug ) ) {
+			$cloner_url = network_admin_url( 'admin.php?page=ns-cloner', 'https' );
+			WP_CLI::log( "--> Manual action required: Duplicate site." );
+			WP_CLI::log( "--> Visit $cloner_url" );
+			WP_CLI::log( "--> Clone site using the following parameters:" );
+			WP_CLI::log( "-->    Mode: Standard Clone" );
+			WP_CLI::log( "-->    Source ID: $source_site_id" );
+			WP_CLI::log( "-->    New Site Title: $title" );
+			WP_CLI::log( "-->    New Site URL: $slug" );
 
-		if ( preg_match( '/https?:\/\/[^\s]+/', $clone, $matches ) ) {
-			$this->site_url = $matches[0];
-			WP_CLI::log( $clone );
-		} else {
-			WP_CLI::error( "Unable to parse url from site cloner output: $clone" );
+			WP_CLI::confirm( "--> Duplication completed?" );
 		}
+
+		$this->site_url = network_site_url($slug, 'https');
+
+		if ( ! $this->site_exists( $slug ) ) {
+			WP_CLI::error( "Site not found: {$this->site_url}" );
+		}
+
+		WP_CLI::debug( "Site found: {$this->site_url}" );
 	}
 
 	/**
@@ -730,6 +738,14 @@ EOL;
 		foreach ( $lines as $line ) {
 			WP_CLI::line( $line );
 		}
+	}
+
+	private function site_exists( string $slug ): bool {
+		$sites     = $this->run_cli_command( "site list --field=url" );
+		$url       = rtrim( network_site_url( $slug, 'https' ), '/' );
+		$url_regex = preg_quote( $url, '/' );
+
+		return preg_match( "/^$url_regex\/?$/m", $sites );
 	}
 }
 
