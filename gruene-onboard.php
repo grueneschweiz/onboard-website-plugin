@@ -24,10 +24,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 }
 
 /**
- * Holds the CLI commands.
- *
- * Note: The commands doc blocks are parsed by WP, so they must respect the
- * conventions.
+ * Generate new sites for GREENS.
  *
  * @see https://make.wordpress.org/cli/handbook/commands-cookbook/
  *
