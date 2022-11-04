@@ -700,6 +700,9 @@ EOL;
 	private function run_cli_command( $command ) {
 		WP_CLI::debug( 'Running Command: wp ' . $command );
 
+		// don't strip umlauts
+		setlocale( LC_CTYPE, "de_CH.UTF-8" );
+
 		// run the command directly with shell_exec because WP_CLI::runcommand is buggy if you need quoted associated
 		// arguments and WP_CLI::run_command doesn't let you capture the output
 		$out = shell_exec( 'wp ' . $command );
