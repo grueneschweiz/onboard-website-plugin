@@ -266,6 +266,8 @@ EOL;
 			$this->search_replace_email();
 		}
 
+		$this->clear_cache();
+
 		$this->show_onboarding_mail();
 	}
 
@@ -746,6 +748,14 @@ EOL;
 		$url_regex = preg_quote( $url, '/' );
 
 		return preg_match( "/^$url_regex\/?$/m", $sites );
+	}
+
+	private function clear_cache(): void {
+		$command = sprintf( '--url=%s cache flush',
+			escapeshellarg( $this->site_url )
+		);
+
+		$this->run_cli_command( $command );
 	}
 }
 
