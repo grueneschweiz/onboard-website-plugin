@@ -6,7 +6,7 @@
  * Author:          grueneschweiz
  * Author URI:      https://gruene.ch
  * Text Domain:     gruene-onboard
- * Version:         1.3.0
+ * Version:         1.3.1
  *
  * @package         Gruene_Onboard
  */
