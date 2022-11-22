@@ -80,7 +80,7 @@ EOL;
 	private $mail_de = <<<EOL
 Salut {{first_name}}
 
-Cool, vielen Dank für deine Bestellung. Ich habe deine Website soeben eingerichtet. Sie hat etwas Musterinhalt drauf, den du anpassen oder löschen kannst, so wie es für dich am Einfachsten ist. Die Website ist noch gesperrt, sodass sie nur eingeloggte User sehen können.
+Cool, vielen Dank für deine Bestellung. Ich habe deine Website soeben eingerichtet. Sie hat etwas Musterinhalt drauf, den du anpassen oder löschen kannst, so wie es für dich am einfachsten ist. Die Website ist noch gesperrt, sodass sie nur eingeloggte User sehen können.
 
 {{links}}
 Einloggen kannst du dich mit dem GRÜNEN-Login (das gleiche Login wie für den Chat, das Wiki, das CD-Tool etc.). Wenn du noch kein Login hast, kannst du dich selbst registrieren. Klicke dazu einfach auf 'Registrieren' und trage dich mit der folgenden E-Mail-Adresse ein {{email}}.
