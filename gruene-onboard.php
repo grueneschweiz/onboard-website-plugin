@@ -690,7 +690,7 @@ EOL;
 		$this->run_cli_command( $command );
 
 		// set mode
-		$command = sprintf( '--url=%s option patch set underConstructionDisplayOption 1',
+		$command = sprintf( '--url=%s option set underConstructionDisplayOption 1',
 			escapeshellarg( $this->site_url )
 		);
 
