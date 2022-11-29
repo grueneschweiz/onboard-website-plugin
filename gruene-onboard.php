@@ -39,7 +39,8 @@ class Onboarder {
 	const PLAN_ALL_INVLUSIVE = 'all_inclusive';
 	const PLAN_MINIMAL = 'minimal';
 
-	private $person_offer_site_ids = [ 653, 624, 648 ];
+	private $person_offer_site_ids_de = [ 653, 624, 648, 726, 724 ];
+	private $person_offer_site_ids_fr = [ 653, 624, 648, 745, 752 ];
 	private $person_front_page_id = 513;
 
 	private /** @noinspection PhpUnusedPrivateFieldInspection */
@@ -452,7 +453,9 @@ EOL;
 	}
 
 	private function delete_offer_pages() {
-		foreach ( $this->person_offer_site_ids as $id ) {
+		$ids = $this->lang === 'de' ? $this->person_offer_site_ids_de : $this->person_offer_site_ids_fr;
+
+		foreach ( $ids as $id ) {
 			$this->delete_page( $id );
 		}
 	}
