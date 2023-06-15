@@ -94,7 +94,7 @@ Damit wir die Website auf deine Domain umstellen können, müsstest du als Names
     • ns1.cyon.ch
     • ns2.cyon.ch
     • ggf. weitere Zeilen löschen / leer lassen
-Bitte melde dich vorgängig, damit wir die nötigen Änderungen auch bei der Website vornehmen können.
+Bitte melde dich sobald dies geschehen ist, damit wir die nötigen Änderungen auch bei der Website vornehmen können.
 
 Unabhängig von der Domain, kannst du bereits jetzt beginnen, deine Inhalte einzufügen etc.
 
@@ -120,7 +120,7 @@ Pour nous permettre de passer du site web à ton domaine, tu dois entrer ce qui 
 - ns1.cyon.ch
 - ns2.cyon.ch
 - si nécessaire, supprimer / laisser les lignes supplémentaires vides
-Merci de nous contacter à l'avance afin que nous puissions apporter les modifications nécessaires au site web.
+Merci de nous informer dès que cela sera fait, afin que nous puissions apporter les modifications nécessaires au site web.
 
 Quel que soit le domaine, tu peux déjà commencer à ajouter ton contenu, etc.
 
