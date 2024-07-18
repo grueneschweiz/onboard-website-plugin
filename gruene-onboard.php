@@ -101,7 +101,7 @@ Unabhängig von der Domain, kannst du bereits jetzt beginnen, deine Inhalte einz
 {{support}}
 
 Herzlich,
-Cyrill
+Michael
 EOL;
 
 	private $mail_fr = <<<EOL
@@ -127,7 +127,7 @@ Quel que soit le domaine, tu peux déjà commencer à ajouter ton contenu, etc.
 {{support}}
 
 Cordialement,
-Cyrill
+Michael
 EOL;
 
 
